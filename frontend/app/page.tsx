@@ -24,8 +24,8 @@ type Agent = {
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [name, setName] = useState("Guardião do Eclipse");
-  const [theme, setTheme] = useState("fantasia sombria com arte de espada lendária e criaturas místicas");
+  const [name, setName] = useState("Lorde das Chamas");
+  const [theme, setTheme] = useState("fantasia épica com dragões, armas ancestrais e reinos em ruínas");
   const [style, setStyle] = useState("inspiracao-fiel");
   const [fidelity, setFidelity] = useState("high");
   const [loading, setLoading] = useState(false);
@@ -102,8 +102,8 @@ export default function HomePage() {
           {[
             ["Projetos", String(projects.length)],
             ["Agentes", String(agents.length)],
-            ["Versões", "42"],
-            ["Exports", "27"],
+            ["Versões", "48"],
+            ["Referências", "16"],
           ].map(([label, value]) => (
             <div key={label} style={{ background: "#101827", border: "1px solid #243244", borderRadius: 16, padding: 20 }}>
               <div style={{ color: "#94a3b8", fontSize: 13 }}>{label}</div>
