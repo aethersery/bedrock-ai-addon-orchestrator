@@ -4,14 +4,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes.agents import router as agents_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.corpus import router as corpus_router
+from app.api.routes.grounding import router as grounding_router
 from app.api.routes.llm import router as llm_router
+from app.api.routes.production import router as production_router
 from app.api.routes.projects import router as projects_router
 from app.api.routes.references import router as references_router
+from app.api.routes.workflows import router as workflows_router
+from app.database import Base, engine
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Bedrock AI Addon Orchestrator",
-    version="0.8.0",
-    description="Plataforma com autenticação, corpus documental, agentes conectados e IA integrada para addons Bedrock.",
+    version="1.1.0",
+    description="Plataforma de produção com grounding documental, persistência real, múltiplos agentes e workflow Bedrock.",
 )
 
 app.add_middleware(
@@ -28,6 +34,9 @@ app.include_router(references_router, prefix="/api")
 app.include_router(agents_router, prefix="/api")
 app.include_router(llm_router, prefix="/api")
 app.include_router(corpus_router, prefix="/api")
+app.include_router(grounding_router, prefix="/api")
+app.include_router(workflows_router, prefix="/api")
+app.include_router(production_router, prefix="/api")
 
 
 @app.get("/api/health")
@@ -35,5 +44,6 @@ def health_check():
     return {
         "status": "ok",
         "service": "bedrock-ai-addon-orchestrator",
-        "version": "0.8.0",
+        "version": "1.1.0",
+        "database": "sqlite",
     }
