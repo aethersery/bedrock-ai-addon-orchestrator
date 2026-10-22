@@ -1,35 +1,47 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from __future__ import annotations
 
-from app.api.routes.agents import router as agents_router
-from app.api.routes.projects import router as projects_router
-from app.api.routes.references import router as references_router
-from app.api.routes.v2_projects import router as v2_projects_router
+from fastapi import APIRouter, File, HTTPException, UploadFile
+from pydantic import BaseModel, ConfigDict, Field
 
-app = FastAPI(
-    title="Bedrock AI Addon Orchestrator",
-    version="0.5.0",
-    description="Arquitetura com agentes conectados, gestão de versões, referências e artefatos para addons Bedrock.",
-)
+from app.services.document_corpus import document_corpus_service
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(projects_router, prefix="/api")
-app.include_router(agents_router, prefix="/api")
-app.include_router(references_router, prefix="/api")
-app.include_router(v2_projects_router, prefix="/api")
+router = APIRouter(prefix="/corpus", tags=["corpus"])
 
 
-@app.get("/api/health")
-def health_check():
+class SearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: str = Field(..., min_length=2, max_length=500)
+    top_k: int = Field(default=5, ge=1, le=20)
+
+
+@router.post("/{project_id}/upload")
+async def upload_document(project_id: str, file: UploadFile = File(...)):
+    if not project_id:
+        raise HTTPException(status_code=400, detail="project_id is required")
+    if file.filename is None:
+        raise HTTPException(status_code=400, detail="file filename is required")
+
+    content = await file.read()
+    result = document_corpus_service.ingest_file(project_id, file.filename, content, file.content_type)
     return {
-        "status": "ok",
-        "service": "bedrock-ai-addon-orchestrator",
-        "version": "0.5.0",
+        "project_id": project_id,
+        "filename": file.filename,
+        "status": "ingested",
+        "chunks": result["chunk_count"],
+    }
+
+
+@router.get("/{project_id}/documents")
+def list_documents(project_id: str):
+    return document_corpus_service.list_documents(project_id)
+
+
+@router.post("/{project_id}/search")
+def search_documents(project_id: str, request: SearchRequest):
+    results = document_corpus_service.search(project_id, request.query, top_k=request.top_k)
+    return {
+        "project_id": project_id,
+        "query": request.query,
+        "results": results,
     }
